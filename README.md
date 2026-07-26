@@ -68,7 +68,7 @@ To complete this task, Terraform and Azure CLI must be installed and configured 
 
 **7. Use Modules in Main Configuration**
 - Define variables in `variables.tf` with the following parameters:
-    * location: `uksouth`.
+    * location: `polandcentral`.
     * resource_group_name: `mate-azure-task-12`.
     * virtual_network_name: `vnet`.
     * vnet_address_prefix: `10.0.0.0/16`.
@@ -77,7 +77,7 @@ To complete this task, Terraform and Azure CLI must be installed and configured 
     * network_security_group_name: `defaultnsg`.
     * public_ip_address_name: `linuxboxpip`.
     * vm_name: `matebox`.
-    * vm_size: `Standard_B1s`.
+    * vm_size: `Standard_D2s_v3`.
     * ssh_key_public: `your-public-key-content`.
     * dns_label: `matetask` (you can append a random number in your script).
 
@@ -93,3 +93,35 @@ To complete this task, Terraform and Azure CLI must be installed and configured 
 
 ### Technical Decisions
 - **Modern AzureRM Syntax:** Updated storage resource bindings to use `storage_account_id` over deprecated `storage_account_name` attributes.
+
+# Infrastructure as Code with Azure & Terraform
+
+**Author:** Diana Horban
+**Repository:** https://github.com/dianahorban477-bot/devops_todolist_terraform_task
+
+This project provisions a modular Azure infrastructure using Terraform.
+
+##  Architecture
+
+- **Network (`modules/network`)**: Creates VNet, Subnet, NSG, and Public IP.
+- **Compute (`modules/compute`)**: Deploys Ubuntu 22.04 LTS VM with CustomScript extension.
+- **Storage (`modules/storage`)**: Provisions Storage Account and `task-artifacts` Container.
+
+##  Deployment Steps
+
+1. **Initialize Terraform Backend & Modules**:
+   ```bash
+   terraform init
+
+2. **Check Code Formatting & Validate Syntax**:
+   ```bash
+   terraform fmt -recursive
+   terraform validate
+
+3. **Preview Infrastructure Plan**:
+   ```bash
+   terraform plan
+
+4. **Apply Infrastructure Changes**:
+   ```bash
+   terraform apply -auto-approve
