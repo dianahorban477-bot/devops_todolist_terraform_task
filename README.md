@@ -47,7 +47,7 @@ To complete this task, Terraform and Azure CLI must be installed and configured 
 
 - The compute module will create a network interface, virtual machine, and VM extension for deploying the ToDo List application.
     * Network Interface: name it `${var.vm_name}-nic`.
-    * Virtual Machine: name it `matebox`, image `Ubuntu2204`, size `Standard_B1s`, SSH key `linuxboxsshkey`.
+    * Virtual Machine: name it `matebox`, image `Ubuntu2204`, size `Standard_D2s_v3`, SSH key `linuxboxsshkey`.
     * VM Extension: use the `CustomScript` extension to execute `install-app.sh` script.
 
 
@@ -89,10 +89,6 @@ To complete this task, Terraform and Azure CLI must be installed and configured 
 - Verify the application is running by visiting the public IP in a web browser.
 
 **10. Pull request's description should also contain a reference to a successful workflow run**
-# Lessons Learned
-
-### Technical Decisions
-- **Modern AzureRM Syntax:** Updated storage resource bindings to use `storage_account_id` over deprecated `storage_account_name` attributes.
 
 # Infrastructure as Code with Azure & Terraform
 
@@ -125,3 +121,67 @@ This project provisions a modular Azure infrastructure using Terraform.
 4. **Apply Infrastructure Changes**:
    ```bash
    terraform apply -auto-approve
+
+## Troubleshooting & Lessons Learned
+
+* **Warning:** 'Argument is deprecated` in `modules/storage/main.tf`.
+* **Root Cause:** A deprecation warning regarding legacy attribute bindings led to a partial refactoring of modules/storage/main.tf.
+* **Fix:**  Updated the argument to match `azurerm` v3.x syntax:
+  ```hcl
+  storage_account_id = azurerm_storage_account.sa.name
+
+* **Issue:** `An argument named "storage_account_id" is not expected here` in `modules/storage/main.tf`.
+* **Root Cause:** Partial update during refactoring. The right-hand value was updated to `.name` based on IDE hints, but the argument name itself remained `storage_account_id`.
+* **Fix:** Fully updated the argument to match `azurerm` v3.x syntax:
+  ```hcl
+  storage_account_name = azurerm_storage_account.sa.name
+
+### Issue: `IPv4BasicSkuPublicIpCountLimitReached`
+
+When running `terraform apply`, you might encounter the following error in certain Azure regions or subscription types:
+
+> `IPv4BasicSkuPublicIpCountLimitReached: Cannot create more than 0 IPv4 Basic SKU public IP addresses for this subscription in this region.`
+
+**Cause:**
+Azure restricts the creation of Public IP addresses using the `Basic` SKU in certain subscriptions and enforces the use of the `Standard` SKU.
+
+**Solution:**
+In the network module (`modules/network/main.tf`), update the `azurerm_public_ip` resource configuration to use `Standard` SKU and `Static` allocation method:
+
+```hcl
+resource "azurerm_public_ip" "pip" {
+  name                = var.public_ip_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  domain_name_label   = var.dns_label_prefix
+}
+
+**Cause:**
+Azure restricts the creation of Public IP addresses using the `Basic` SKU in certain subscriptions and enforces the use of the `Standard` SKU.
+
+**Solution:**
+In the network module (`modules/network/main.tf`), update the `azurerm_public_ip` resource configuration to use `Standard` SKU and `Static` allocation method:
+
+```hcl
+resource "azurerm_public_ip" "pip" {
+  name                = var.public_ip_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  domain_name_label   = "${var.dns_label_prefix}-${random_integer.dns.result}"
+}
+
+**Cause:**
+Even if Network Security Group (NSG) rules are created, incoming traffic on ports 80 (HTTP) or 22 (SSH) will still be dropped if the NSG is not explicitly associated with the Subnet or Network Interface.
+
+**Solution:**
+In the network module (`modules/network/main.tf`), attach the NSG to the subnet using the `azurerm_subnet_network_security_group_association` resource:
+
+```hcl
+resource "azurerm_subnet_network_security_group_association" "nsg_assoc" {
+  subnet_id                 = azurerm_subnet.subnet.id
+  network_security_group_id = azurerm_network_security_group.defaultnsg.id
+}
