@@ -89,3 +89,7 @@ To complete this task, Terraform and Azure CLI must be installed and configured 
 - Verify the application is running by visiting the public IP in a web browser.
 
 **10. Pull request's description should also contain a reference to a successful workflow run**
+# Lessons Learned
+
+### Technical Decisions
+- **Modern AzureRM Syntax:** Updated storage resource bindings to use `storage_account_id` over deprecated `storage_account_name` attributes.
