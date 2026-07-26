@@ -49,7 +49,7 @@ resource "azurerm_virtual_machine_extension" "custom_script" {
 
   settings = <<SETTINGS
     {
-        "commandToExecute": "echo Hello World"
+        "commandToExecute": "sudo apt-get update && sudo apt-get install -y nginx && echo '<h1>ToDo List App is running!</h1>' | sudo tee /var/www/html/index.html"
     }
 SETTINGS
 }

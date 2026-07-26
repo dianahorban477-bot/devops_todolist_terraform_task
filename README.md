@@ -185,3 +185,25 @@ resource "azurerm_subnet_network_security_group_association" "nsg_assoc" {
   subnet_id                 = azurerm_subnet.subnet.id
   network_security_group_id = azurerm_network_security_group.defaultnsg.id
 }
+
+### Application Not Accessible After Deployment (Missing Web Server)
+**Cause:**
+The initial `azurerm_virtual_machine_extension` configuration only executed a simple bash command (`echo Hello World`), which did not install or start an actual HTTP web server process (like Nginx) listening on port 80.
+
+**Solution:**
+Updated the `commandToExecute` setting in `modules/compute/main.tf` to automatically install Nginx, start the service, and serve a custom index page upon VM provision:
+
+```hcl
+resource "azurerm_virtual_machine_extension" "custom_script" {
+  name                 = "install-app"
+  virtual_machine_id   = azurerm_linux_virtual_machine.vm.id
+  publisher            = "Microsoft.Azure.Extensions"
+  type                 = "CustomScript"
+  type_handler_version = "2.1"
+
+  settings = <<SETTINGS
+    {
+        "commandToExecute": "sudo apt-get update && sudo apt-get install -y nginx && echo '<h1>ToDo List App is running!</h1>' | sudo tee /var/www/html/index.html"
+    }
+SETTINGS
+}
