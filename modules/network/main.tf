@@ -18,35 +18,40 @@ resource "azurerm_subnet" "subnet" {
   address_prefixes     = [var.subnet_address_prefix]
 }
 
+locals {
+  inbound_rules = [
+    {
+      name     = "AllowHTTP"
+      priority = 100
+      port     = "80"
+    },
+    {
+      name     = "AllowSSH"
+      priority = 101
+      port     = "22"
+    }
+  ]
+}
+
 resource "azurerm_network_security_group" "defaultnsg" {
   name                = var.nsg_name
   location            = var.location
   resource_group_name = var.resource_group_name
 
-  security_rule {
-    name                       = "AllowHTTP"
-    priority                   = 100
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "80"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
+  dynamic "security_rule" {
+    for_each = local.inbound_rules
+    content {
+      name                       = security_rule.value.name
+      priority                   = security_rule.value.priority
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "Tcp"
+      source_port_range          = "*"
+      destination_port_range     = security_rule.value.port
+      source_address_prefix      = "*"
+      destination_address_prefix = "*"
+    }
   }
-
-  security_rule {
-    name                       = "AllowSSH"
-    priority                   = 101
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
 }
 
 resource "azurerm_public_ip" "pip" {

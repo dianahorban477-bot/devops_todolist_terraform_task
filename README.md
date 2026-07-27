@@ -207,3 +207,39 @@ resource "azurerm_virtual_machine_extension" "custom_script" {
     }
 SETTINGS
 }
+
+### Code Refactoring: DRY Principle with Dynamic Blocks in NSG
+**Issue / Code Smell:**
+The Network Security Group (`azurerm_network_security_group`) contained duplicate `security_rule` code blocks for HTTP and SSH, violating the DRY (Don't Repeat Yourself) principle.
+
+**Solution:**
+Refactored the NSG module using Terraform `locals` and `dynamic` blocks to streamline rules management:
+
+```hcl
+locals {
+  inbound_rules = [
+    { name = "AllowHTTP", priority = 100, port = "80" },
+    { name = "AllowSSH",  priority = 101, port = "22" }
+  ]
+}
+
+resource "azurerm_network_security_group" "defaultnsg" {
+  name                = var.nsg_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  dynamic "security_rule" {
+    for_each = local.inbound_rules
+    content {
+      name                       = security_rule.value.name
+      priority                   = security_rule.value.priority
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "Tcp"
+      source_port_range          = "*"
+      destination_port_range     = security_rule.value.port
+      source_address_prefix      = "*"
+      destination_address_prefix = "*"
+    }
+  }
+}
