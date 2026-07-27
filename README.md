@@ -243,3 +243,20 @@ resource "azurerm_network_security_group" "defaultnsg" {
     }
   }
 }
+
+### CustomScript Refactoring: Externalizing Provisioning Script
+**Requirement:**
+Executing inline commands in Terraform configuration reduces script maintainability and violates modular architecture principles.
+
+**Solution:**
+Updated `modules/compute/main.tf` to download and execute the dedicated `install-app.sh` script from the Azure Blob Storage Container using `fileUris`:
+
+```hcl
+settings = <<SETTINGS
+    {
+        "fileUris": [
+            "https://${var.storage_account_name}.blob.core.windows.net/${var.storage_container_name}/install-app.sh"
+        ],
+        "commandToExecute": "bash install-app.sh"
+    }
+SETTINGS

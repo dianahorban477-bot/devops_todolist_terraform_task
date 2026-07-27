@@ -32,3 +32,13 @@ variable "ssh_key_public" {
   type        = string
   description = "Public SSH Key"
 }
+
+variable "storage_account_name" {
+  type        = string
+  description = "Storage Account name"
+}
+
+variable "storage_container_name" {
+  type        = string
+  description = "Storage Container name"
+}

@@ -33,14 +33,16 @@ module "network" {
 }
 
 module "compute" {
-  source              = "./modules/compute"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = var.location
-  vm_name             = var.vm_name
-  vm_size             = var.vm_size
-  subnet_id           = module.network.subnet_id
-  public_ip_id        = module.network.public_ip_id
-  ssh_key_public      = var.ssh_key_public
+  source                 = "./modules/compute"
+  resource_group_name    = azurerm_resource_group.rg.name
+  location               = var.location
+  vm_name                = var.vm_name
+  vm_size                = var.vm_size
+  subnet_id              = module.network.subnet_id
+  public_ip_id           = module.network.public_ip_id
+  ssh_key_public         = var.ssh_key_public
+  storage_account_name   = module.storage.storage_account_name
+  storage_container_name = module.storage.storage_container_name
 }
 
 module "storage" {

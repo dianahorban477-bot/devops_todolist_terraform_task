@@ -47,9 +47,13 @@ resource "azurerm_virtual_machine_extension" "custom_script" {
   type                 = "CustomScript"
   type_handler_version = "2.1"
 
+  # Передаём URL скрипта из Storage Account и команду для его запуска
   settings = <<SETTINGS
     {
-        "commandToExecute": "sudo apt-get update && sudo apt-get install -y nginx && echo '<h1>ToDo List App is running!</h1>' | sudo tee /var/www/html/index.html"
+        "fileUris": [
+            "https://${var.storage_account_name}.blob.core.windows.net/${var.storage_container_name}/install-app.sh"
+        ],
+        "commandToExecute": "bash install-app.sh"
     }
 SETTINGS
 }
